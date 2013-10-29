@@ -8,8 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import <PebbleKit/PebbleKit.h>
-@interface PBViewController : UIViewController <UITextFieldDelegate> {
+@interface PBViewController : UIViewController <UITextFieldDelegate, UIDocumentInteractionControllerDelegate> {
     NSTimer *wat;
+    NSString *apiURLString;
+    UIDocumentInteractionController *documentInteractionController;
 }
 @property (strong, nonatomic) IBOutlet UITextField *timeInt;
 @property (strong, nonatomic) IBOutlet UITextField *usernameField;
@@ -17,5 +19,6 @@
 - (IBAction)updateStart:(id)sender;
 @property (strong, nonatomic) IBOutlet UIButton *updateBtn;
 @property (strong, nonatomic) IBOutlet UITextField *hostField;
+- (IBAction)installApp:(id)sender;
 
 @end

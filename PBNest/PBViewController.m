@@ -24,8 +24,14 @@
         return;
     }
     
-    // Fetch weather at current location using openweathermap.org's JSON API:
-    NSString *apiURLString = [NSString stringWithFormat:@"http://%@/nest/getTemp.php?email=%@&password=%@", self.hostField.text, self.usernameField.text, self.passwordField.text];
+    NSLog(@"Text: %lu",(unsigned long)[self.hostField.text length]);
+    if ([self.hostField.text length] != 0) {
+        apiURLString = [NSString stringWithFormat:@"http://%@/nest/getTemp.php?email=%@&password=%@", self.hostField.text, self.usernameField.text, self.passwordField.text];
+    }else{
+        apiURLString = [NSString stringWithFormat:@"http://pbdb.dylanlaws.com/nest/getTemp.php?email=%@&password=%@", self.usernameField.text, self.passwordField.text];
+
+    }
+    NSLog(@"URL: %@", apiURLString);
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:apiURLString]];
     NSOperationQueue *queue = [[NSOperationQueue alloc] init];
     [NSURLConnection sendAsynchronousRequest:request queue:queue completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
@@ -47,7 +53,7 @@
         
         // Check for error or non-OK statusCode:
         if (error || httpResponse.statusCode != 200) {
-            message = @"Error fetching weather";
+            message = @"Error fetching house data";
             showAlert();
             return;
         }
@@ -55,10 +61,10 @@
         // Parse the JSON response:
         NSError *jsonError = nil;
         NSDictionary *root = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+        NSLog(@"%@", root);
         @try {
             if (jsonError == nil && root) {
                 // TODO: type checking / validation, this is really dangerous...
-                
                 // Set the number format
                 NSNumberFormatter *numberFormat = [[NSNumberFormatter alloc] init ];
                 [numberFormat setNumberStyle:NSNumberFormatterDecimalStyle];
@@ -71,25 +77,16 @@
                 NSDictionary *current_state = [root valueForKey:@"current_state"];
                 NSNumber *temperatureNumber = current_state[@"temperature"];
                 
-                NSString *formattedTemp = @"Current: ";
+                NSString *formattedTemp = @"";
                 formattedTemp = [formattedTemp stringByAppendingString:[numberFormat stringFromNumber:temperatureNumber]];
                 formattedTemp = [formattedTemp stringByAppendingString:@" \u00B0"];
                 formattedTemp = [formattedTemp stringByAppendingString:temperatureScale];
                 
-                // Get the target temperature:
-                NSDictionary *target = [root valueForKey:@"target"];
-                NSNumber *targetTemperatureNumber = target[@"temperature"];
-                
-                NSString *formattedTargetTemp = @"Target: ";
-                formattedTargetTemp = [formattedTargetTemp stringByAppendingString:[numberFormat stringFromNumber:targetTemperatureNumber]];
-                formattedTargetTemp = [formattedTargetTemp stringByAppendingString:@" \u00B0"];
-                formattedTargetTemp = [formattedTargetTemp stringByAppendingString:temperatureScale];
-
-                
                 
                 // Get the humdity:
-                // NSNumber *humidityNumber = root[@"2"];
-                // NSString *formattedHumidity = [NSString stringWithFormat:@"%@", humidityNumber];
+                NSDictionary *target = [root valueForKey:@"current_state"];
+                 NSNumber *humidityNumber = target[@"humidity"];
+                NSString *formattedHumidity = [NSString stringWithFormat:@"%@ %%", humidityNumber];
                 
                 // Get the mode
                 // NSString *houseMode = root[@"3"];
@@ -120,7 +117,7 @@
                 // NSNumber *modeKey = @(2); // This is our custom-defined key for the humidity string.
                 NSDictionary *update = @{
                                           currentTemperatureKey:[NSString stringWithFormat:@"%@", formattedTemp],
-                                          targetTemperatureKey:[NSString stringWithFormat:@"%@", formattedTargetTemp]
+                                          targetTemperatureKey:[NSString stringWithFormat:@"%@", formattedHumidity]
                                           //humidityKey:[NSString stringWithFormat:@"%@", formattedHumidity],
                                           //modeKey:houseMode
                                         };
@@ -240,5 +237,26 @@
                                          userInfo:nil
                                           repeats:YES];
     NSLog(@"starting");
+}
+- (IBAction)installApp:(id)sender {
+    NSURL *url = [NSURL URLWithString:@"http://dylanlaws.com/pebble/PebbleNest.pbw"];
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSString *path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    path = [path stringByAppendingString:@"/PBNest.pbw"];
+    [data writeToFile:path atomically:YES];
+	NSURL *fileURL = [[NSURL alloc] initFileURLWithPath:path];
+
+	if (path) {
+		documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:fileURL];
+        
+		documentInteractionController.delegate = self;
+		
+		//self.documentInteractionController.name = @"Title";
+		//self.documentInteractionController.UTI = @"com.adobe.pdf";
+		[documentInteractionController presentOptionsMenuFromRect:CGRectZero
+                                                                inView:self.view
+                                                              animated:YES];
+	}
+    
 }
 @end
