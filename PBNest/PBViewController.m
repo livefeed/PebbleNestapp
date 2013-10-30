@@ -45,7 +45,7 @@
         __block NSString *message = @"";
         void (^showAlert)(void) = ^{
             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-           //     [[[UIAlertView alloc] initWithTitle:nil message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
+                [[[UIAlertView alloc] initWithTitle:nil message:message delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
                  NSLog(@"%@",message);
             }];
            
@@ -130,8 +130,9 @@
         }
         @catch (NSException *exception) {
         }
-        message = @"Error parsing response";
-        showAlert();
+        UIAlertView *errorAlert = [[UIAlertView alloc] initWithTitle:@"Oh no!" message:[NSString stringWithFormat:@"%@", root[@"error"]] delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+        [errorAlert show];
+        [wat invalidate];
     }];
 }
 
